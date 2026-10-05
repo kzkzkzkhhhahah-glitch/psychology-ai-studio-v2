@@ -4,7 +4,7 @@ on:
   workflow_dispatch:
   push:
     paths:
-      - '**.zip'
+      - '*.zip'
       - '.github/workflows/**'
 
 jobs:
@@ -15,22 +15,12 @@ jobs:
       - name: Checkout repository
         uses: actions/checkout@v6
 
-      - name: Find and extract project ZIP
+      - name: Extract Master Character project
         run: |
           rm -rf extracted
           mkdir extracted
-
-          ZIP_FILE=$(find . -maxdepth 1 -type f -iname '*.zip' | head -n 1)
-
-          if [ -z "$ZIP_FILE" ]; then
-            echo "No ZIP file found."
-            exit 1
-          fi
-
-          echo "Using ZIP: $ZIP_FILE"
-          unzip -q "$ZIP_FILE" -d extracted
-
-          echo "Extracted files:"
+          unzip -q PsychologyAIStudio-MasterCharacter-v3.zip -d extracted
+          echo "Project extracted successfully"
           find extracted -maxdepth 3 -type f | sort
 
       - name: Set up Java 17
@@ -44,20 +34,13 @@ jobs:
         with:
           gradle-version: '8.9'
 
-      - name: Find Android project
-        run: |
-          PROJECT_DIR=$(find extracted -name settings.gradle.kts -o -name settings.gradle | head -n 1 | xargs dirname)
-          echo "PROJECT_DIR=$PROJECT_DIR" >> "$GITHUB_ENV"
-          echo "Android project: $PROJECT_DIR"
-
       - name: Build APK
-        working-directory: ${{ env.PROJECT_DIR }}
-        run: |
-          gradle assembleDebug --no-daemon
+        working-directory: extracted/PsychologyAIStudioClean
+        run: gradle assembleDebug --no-daemon
 
       - name: Upload APK
         uses: actions/upload-artifact@v7
         with:
-          name: psychology-ai-studio-debug-apk
-          path: ${{ env.PROJECT_DIR }}/app/build/outputs/apk/debug/app-debug.apk
+          name: psychology-ai-studio-master-character-apk
+          path: extracted/PsychologyAIStudioClean/app/build/outputs/apk/debug/app-debug.apk
           if-no-files-found: error
